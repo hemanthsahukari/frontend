@@ -1,109 +1,122 @@
 <template>
     <div>
       <Welcome />
-      <div class="box-container" v-if="showContact">
-        <div class="addnewcontact">
-          <button type="button" @click="addNewContact">
-            Add new Contact
+      <div class="box-container" v-if="showBook">
+        <div class="addnewbook">
+          <button type="button" @click="addNewBook">
+            Add new Book
           </button>
         </div>
-        <div class="contactlist">
-          <h2>List Contacts</h2>
+        <div class="booklist">
+          <h2>List Books</h2>
           <table class="table table-bordered">
             <thead>
               <tr>
-                <th scope="col">#</th>
-                <th scope="col">Name</th>
-                <th scope="col">Mobile</th>
-                <th scope="col">Action</th>
+                <th scope="col">sl.no</th>
+                <th scope="col">Title</th>
+                <th scope="col">Author</th>
+                <th scope="col">Genre</th>
+                <th scope="col">Availability</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(contact, index) in listContacts" :key="index">
-                <th scope="row">{{index + 1}}</th>
-                <td>{{contact.name}}</td>
-                <td>{{contact.mobile}}</td>
+              <tr v-for="(book,index) in listBooks" :key="book.id">
+                <th scope="row">{{ index+1 }}</th>
+                <td>{{ book.title }}</td>
+                <td>{{ book.author }}</td>
+                <td>{{ book.genre }}</td>
+                <td>{{ book.available?'Available':'Not Available' }}</td>
                 <td>
-                  <button class="actionBtn" type="button" @click="updateContact(contact, index)">Edit</button>
-                  <button class="actionBtn" type="button" @click="removeContact(index)">Delete</button>
+                  <button class="actionBtn" type="button" @click="updateBook(book,index)">Update</button>
+                  <button class="actionBtn" type="button" @click="removeBook(book.id)">Remove</button>
                 </td>
               </tr>
-              <tr v-if="!listContacts || listContacts.length === 0">
-                <td colspan="4">No Contact Found</td>
+              <tr v-if="!listBooks || listBooks.length === 0">
+                <td colspan="6">No Book Found</td>
               </tr>
             </tbody>
           </table>
-        </div>
-      </div>
-      <form @submit.prevent="onSubmit" novalidate v-else-if="!showContact">
-        <div class="box-container">
-          <h2 class="heading">Contacts</h2>
-          <div class="form-fields">
-            <input name="name" v-model="contact.name" type="text" placeholder="Name">
-            <small class="error" v-for="(error, index) of v$.contact.name.$errors" :key="index">
-              {{ formatModalName(error.$property) }} {{formatMessage(error.$message)}}
-            </small>
           </div>
-          <div class="form-fields">
-            <input name="mobile" v-model="contact.mobile" type="text" placeholder="Mobile" v-on:input="formatMobileNumber(contact.mobile)" >
-            <small class="error" v-for="(error, index) of v$.contact.mobile.$errors" :key="index">
-              {{ formatModalName(error.$property) }} {{formatMessage(error.$message)}}
-            </small>
           </div>
-          <div class="form-fields">
-            <button class="signIn" type="submit">
-              Save
-            </button>
-            <button class="createaccount" type="button" @click="cancel">
-              Cancel
-            </button>
+          <form @submit.prevent="onSubmit" novalidate v-else-if="!showBook">
+            <div class="box-container">
+              <h2 class="heading">Books</h2>
+              <div class="form-fields">
+                <input name="title" v-model="book.title" type="text" placeholder="Title">
+                <small class="error" v-for="(error, index) of v$.book.title.$errors" :key="index">
+                  {{ formatModalName(error.$property) }} {{formatMessage(error.$message)}}
+                </small>
+              </div>
+              <div class="form-fields">
+                <input name="author" v-model="book.author" type="text" placeholder="Author">
+                <small class="error" v-for="(error, index) of v$.book.author.$errors" :key="index">
+                  {{ formatModalName(error.$property) }} {{formatMessage(error.$message)}}
+                </small>
+              </div>
+              <div class="form-fields">
+                <input name="genre" v-model="book.genre" type="text" placeholder="Genre">
+                <small class="error" v-for="(error, index) of v$.book.genre.$errors" :key="index">
+                  {{ formatModalName(error.$property) }} {{formatMessage(error.$message)}}
+                </small>
+              </div>
+              <div class="form-fields">
+                <label for="availability">Availability:</label>
+                <input type="checkbox" id="availability" v-model="book.available">
+              </div>
+              <div class="form-fields">
+                <button class="signIn" type="submit">Save</button>
+                <button class="createaccount" type="button" @click="cancel">Cancel</button> 
+              </div>
+            </div>
+          </form>
           </div>
-        </div>
-      </form>
-    </div>
   </template>
+
   <script>
   import { mapState, mapActions } from 'vuex'
   import Welcome from '@/components/Welcome'
   import useVuelidate from '@vuelidate/core'
   import { required, minLength } from '@vuelidate/validators'
-  import { formatPhoneNumber, capitalizeFirstLetter, lowercaseFirstLetter } from  '@/config/Utils'
-  
+  import { capitalizeFirstLetter, lowercaseFirstLetter } from '@/config/Utils'  
   export default {
-    name: 'todoPage',
-    components: {
-      Welcome
+    name: 'todoPage'
+    components : {
+      Welcome,
     },
     setup() {
       return { v$: useVuelidate() }
     },
     data() {
       return {
-        showContact: true,
-        contact: {
-          name: '',
-          mobile: ''
-        }
+        showBook: true,
+        book: {
+          title: '',
+          author: '',
+          genre: '',
+          available: true,
+        },
       }
     },
     validations() {
       return {
-        contact: {
-          name: { required },
-          mobile: { required, minLength: minLength(10) }
-        }
+        book: {
+          title: { required },
+          author: { required },
+          genre: { required },
+
+        },
       }
     },
     computed: mapState({
-      listContacts: state => state.todo.listContacts
+      listBooks: (state) => state.library.listBooks,
     }),
     created () {
-      this.$store.dispatch('todo/getListContact')
+      this.$store.dispatch('library/getListBooks')
     },
     methods: {
-      ...mapActions('todo', ['addContact', 'editContact', 'deleteContact']),
-      addNewContact() {
-        this.showContact = false
+      ...mapActions('library', ['addBook', 'updateBook', 'removeBook']),
+      addNewBook() {
+        this.showBook = false
       },
       formatModalName(string) {
         return capitalizeFirstLetter(string)
@@ -111,28 +124,25 @@
       formatMessage(string) {
         return lowercaseFirstLetter(string)
       },
-      formatMobileNumber (phone) {
-        this.contact.mobile = formatPhoneNumber(phone)
-      },
       onSubmit() {
         this.v$.$touch()
         if (this.v$.$error) return
         if (this.isEdit) {
-          this.editContact(this.contact)
+          this.updateBook(this.book)
         } else {
-          this.addContact(this.contact)
+          this.addBook(this.book)
         }
         this.reset()
       },
-      updateContact(contact, index) {
-        this.isEdit = true
-        this.editIndex = index
-        this.showContact = false
-        this.contact = Object.assign({}, contact)
+      updateBook(book) {
+        if (this.isEdit) {
+          this.showBook = false
+          this.book = Object.assign({}, book)
+        }
       },
-      removeContact(index) {
-        if (confirm('Are you sure wants to delete?')) {
-          this.deleteContact(index)
+      removeBook(id) {
+        if (confirm('Are you sure you want to remove this book?')) {
+          this.removeBook(id)
         }
       },
       cancel() {
@@ -140,16 +150,18 @@
       },
       reset() {
         this.isEdit = false
-        this.contact = {
-          name: '',
-          mobile: ''
+        this.book = {
+          title: '',
+          author: '',
+          genre: '',
+          available: true,
         }
-        this.showContact = true
-      }
-    }
+        this.showBook = true
+      },
+    },
   }
   </script>
   
-  <style>
+  <style scoped>
   
   </style>
